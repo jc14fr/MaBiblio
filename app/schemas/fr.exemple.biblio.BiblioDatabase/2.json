@@ -1,0 +1,277 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 2,
+    "identityHash": "251c3e149a1d27e579d606b82a29ca5f",
+    "entities": [
+      {
+        "tableName": "categories",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `nom` TEXT NOT NULL, `parentId` INTEGER, FOREIGN KEY(`parentId`) REFERENCES `categories`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "nom",
+            "columnName": "nom",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "parentId",
+            "columnName": "parentId",
+            "affinity": "INTEGER",
+            "notNull": false
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_categories_parentId",
+            "unique": false,
+            "columnNames": [
+              "parentId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_categories_parentId` ON `${TABLE_NAME}` (`parentId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "categories",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "parentId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "objets",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `titre` TEXT NOT NULL, `auteur` TEXT NOT NULL, `isbn` TEXT, `categorieId` INTEGER, `serie` TEXT, `numeroTome` INTEGER, `statut` TEXT NOT NULL DEFAULT 'POSSEDE', `couvertureUrl` TEXT, FOREIGN KEY(`categorieId`) REFERENCES `categories`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "titre",
+            "columnName": "titre",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "auteur",
+            "columnName": "auteur",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isbn",
+            "columnName": "isbn",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "categorieId",
+            "columnName": "categorieId",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "serie",
+            "columnName": "serie",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "numeroTome",
+            "columnName": "numeroTome",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "statut",
+            "columnName": "statut",
+            "affinity": "TEXT",
+            "notNull": true,
+            "defaultValue": "'POSSEDE'"
+          },
+          {
+            "fieldPath": "couvertureUrl",
+            "columnName": "couvertureUrl",
+            "affinity": "TEXT",
+            "notNull": false
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_objets_categorieId",
+            "unique": false,
+            "columnNames": [
+              "categorieId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_objets_categorieId` ON `${TABLE_NAME}` (`categorieId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "categories",
+            "onDelete": "SET NULL",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "categorieId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "personnes",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `nom` TEXT NOT NULL)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "nom",
+            "columnName": "nom",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "prets",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `objetId` INTEGER NOT NULL, `personneId` INTEGER NOT NULL, `sens` TEXT NOT NULL, `dateDebut` INTEGER NOT NULL, `dateRetour` INTEGER, FOREIGN KEY(`objetId`) REFERENCES `objets`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`personneId`) REFERENCES `personnes`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "objetId",
+            "columnName": "objetId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "personneId",
+            "columnName": "personneId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sens",
+            "columnName": "sens",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "dateDebut",
+            "columnName": "dateDebut",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "dateRetour",
+            "columnName": "dateRetour",
+            "affinity": "INTEGER",
+            "notNull": false
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_prets_objetId",
+            "unique": false,
+            "columnNames": [
+              "objetId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_prets_objetId` ON `${TABLE_NAME}` (`objetId`)"
+          },
+          {
+            "name": "index_prets_personneId",
+            "unique": false,
+            "columnNames": [
+              "personneId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_prets_personneId` ON `${TABLE_NAME}` (`personneId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "objets",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "objetId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          },
+          {
+            "table": "personnes",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "personneId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      }
+    ],
+    "views": [],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '251c3e149a1d27e579d606b82a29ca5f')"
+    ]
+  }
+}
