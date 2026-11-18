@@ -1,4 +1,3 @@
-import java.util.Properties
 
 plugins {
     id("com.android.application")
@@ -8,12 +7,7 @@ plugins {
 }
 
 // Lecture seule de version.properties : le build ne modifie jamais ce fichier
-val proprietes = Properties().apply {
-    rootProject.file("version.properties").inputStream().use { load(it) }
-}
-val versionMajeure = proprietes.getProperty("versionMajeure").toInt()
-val versionMineure = proprietes.getProperty("versionMineure").toInt()
-val versionBuild = proprietes.getProperty("buildNumero").toInt()
+
 
 android {
     namespace = "fr.exemple.biblio"
@@ -23,8 +17,8 @@ android {
         applicationId = "fr.jc14fr.MaBiblio"
         minSdk = 26
         targetSdk = 35
-        versionCode = versionMajeure * 1_000_000 + versionMineure * 10_000 + versionBuild
-        versionName = "$versionMajeure.$versionMineure.$versionBuild"
+        versionCode = 1020014
+        versionName = "1.2.14"
     }
 
     buildFeatures { compose = true }
