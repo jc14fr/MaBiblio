@@ -7,6 +7,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -21,7 +22,10 @@ import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items as gridItems
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExtendedFloatingActionButton
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -87,7 +91,6 @@ fun EcranDetailCategorie(
     var photoPrise by rememberSaveable { mutableStateOf<String?>(null) }
 
     // Demande de recherche : incrémentée après un scan ou un appui sur « Chercher ».
-    // « rechercheTraitee » reprend la valeur de la dernière recherche terminée.
     var demandeRecherche by rememberSaveable { mutableStateOf(0) }
     var rechercheTraitee by rememberSaveable { mutableStateOf(0) }
 
@@ -108,7 +111,7 @@ fun EcranDetailCategorie(
         if (oIsbn.isNotBlank()) demandeRecherche++
     }
 
-    // La recherche est faite ici, dans la composition : elle reprend si l'écran est recréé
+    // La recherche est faite dans la composition : elle reprend si l'écran est recréé
     LaunchedEffect(demandeRecherche) {
         if (demandeRecherche > rechercheTraitee) {
             val code = oIsbn.trim()
@@ -180,19 +183,41 @@ fun EcranDetailCategorie(
                 .padding(16.dp)
                 .fillMaxSize()
         ) {
-            Row {
+            Row(verticalAlignment = Alignment.CenterVertically) {
                 TextButton(onClick = onRetour) {
                     Text("← Retour")
                 }
-                TextButton(onClick = {
+                Spacer(Modifier.weight(1f))
+                FilledTonalButton(onClick = {
                     enGrille = !enGrille
                     prefs.edit().putBoolean("grille", enGrille).apply()
                 }) {
                     Text(if (enGrille) "Liste" else "Grille")
                 }
             }
-            Text(categorie.nom, style = MaterialTheme.typography.headlineMedium)
-            Spacer(Modifier.height(16.dp))
+
+            // En-tête coloré : nom de la catégorie et compteurs
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer
+                )
+            ) {
+                Column(Modifier.padding(16.dp)) {
+                    Text(
+                        categorie.nom,
+                        style = MaterialTheme.typography.headlineMedium,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                    Text(
+                        "${sousCategories.size} sous-catégorie(s) · ${objets.size} objet(s)",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                }
+            }
 
             if (enGrille) {
                 LazyVerticalGrid(
@@ -200,25 +225,18 @@ fun EcranDetailCategorie(
                     modifier = Modifier.weight(1f)
                 ) {
                     item(span = { GridItemSpan(maxLineSpan) }) {
-                        Text("Sous-catégories", style = MaterialTheme.typography.titleMedium)
+                        TitreSection("Sous-catégories", sousCategories.size)
                     }
                     gridItems(sousCategories, span = { GridItemSpan(maxLineSpan) }) { sous ->
-                        Text(
-                            text = sous.nom,
-                            style = MaterialTheme.typography.bodyLarge,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .combinedClickable(
-                                    onClick = { onOuvrirSousCategorie(sous) },
-                                    onLongClick = { sousCategorieASupprimer = sous }
-                                )
-                                .padding(vertical = 12.dp)
+                        LigneSousCategorie(
+                            sous = sous,
+                            onClick = { onOuvrirSousCategorie(sous) },
+                            onLongClick = { sousCategorieASupprimer = sous }
                         )
                     }
 
                     item(span = { GridItemSpan(maxLineSpan) }) {
-                        Spacer(Modifier.height(16.dp))
-                        Text("Objets", style = MaterialTheme.typography.titleMedium)
+                        TitreSection("Objets", objets.size)
                     }
                     gridItems(objets) { objet ->
                         CaseObjet(objet = objet, onClick = { onOuvrirObjet(objet) })
@@ -227,27 +245,18 @@ fun EcranDetailCategorie(
             } else {
                 LazyColumn(modifier = Modifier.weight(1f)) {
                     item {
-                        Text("Sous-catégories", style = MaterialTheme.typography.titleMedium)
-                        Spacer(Modifier.height(4.dp))
+                        TitreSection("Sous-catégories", sousCategories.size)
                     }
                     items(sousCategories) { sous ->
-                        Text(
-                            text = sous.nom,
-                            style = MaterialTheme.typography.bodyLarge,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .combinedClickable(
-                                    onClick = { onOuvrirSousCategorie(sous) },
-                                    onLongClick = { sousCategorieASupprimer = sous }
-                                )
-                                .padding(vertical = 12.dp)
+                        LigneSousCategorie(
+                            sous = sous,
+                            onClick = { onOuvrirSousCategorie(sous) },
+                            onLongClick = { sousCategorieASupprimer = sous }
                         )
                     }
 
                     item {
-                        Spacer(Modifier.height(16.dp))
-                        Text("Objets", style = MaterialTheme.typography.titleMedium)
-                        Spacer(Modifier.height(4.dp))
+                        TitreSection("Objets", objets.size)
                     }
                     items(objets) { objet ->
                         LigneObjet(
@@ -378,6 +387,24 @@ fun EcranDetailCategorie(
             }
         )
     }
+}
+
+// Ligne de sous-catégorie avec une pastille : nombre d'objets de la sous-catégorie et de ses descendants
+@Composable
+fun LigneSousCategorie(
+    sous: Categorie,
+    onClick: () -> Unit,
+    onLongClick: () -> Unit
+) {
+    val contexte = LocalContext.current
+    val base = remember { BiblioDatabase.get(contexte) }
+    val nombre by base.categorieDao().nombreObjetsRecursif(sous.id).collectAsState(initial = 0)
+    LigneCarte(
+        titre = sous.nom,
+        pastille = nombre,
+        onClick = onClick,
+        onLongClick = onLongClick
+    )
 }
 
 @Composable

@@ -6,7 +6,6 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
@@ -20,7 +19,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.MaterialTheme
@@ -105,6 +103,7 @@ fun EcranAccueil(
             }
             Spacer(Modifier.height(12.dp))
 
+            // Statistiques : trois cartes de même hauteur
             Row(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier
@@ -125,42 +124,33 @@ fun EcranAccueil(
                 )
             }
 
-            Spacer(Modifier.height(8.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Button(onClick = { lanceurExport.launch("biblio-sauvegarde.zip") }) {
-                    Text("Exporter")
-                }
-                Button(onClick = { lanceurImport.launch(arrayOf("application/zip", "application/json")) }) {
-                    Text("Importer")
-                }
-                Button(onClick = { onOuvrirEcran("SOUHAITS") }) {
-                    Text("Souhaits")
-                }
-            }
-
-            Spacer(Modifier.height(8.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Button(onClick = { onOuvrirEcran("RECHERCHE") }) { Text("Recherche") }
-                Button(onClick = { onOuvrirEcran("PERSONNES") }) { Text("Personnes") }
-                Button(onClick = { onOuvrirEcran("SERIES") }) { Text("Séries") }
-            }
-
+            // Actions : deux lignes de trois tuiles de même taille
             Spacer(Modifier.height(16.dp))
-            Text("Catégories", style = MaterialTheme.typography.titleMedium)
-            Spacer(Modifier.height(4.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                TuileAction("Exporter", { lanceurExport.launch("biblio-sauvegarde.zip") }, Modifier.weight(1f))
+                TuileAction(
+                    "Importer",
+                    { lanceurImport.launch(arrayOf("application/zip", "application/json")) },
+                    Modifier.weight(1f)
+                )
+                TuileAction("Souhaits", { onOuvrirEcran("SOUHAITS") }, Modifier.weight(1f))
+            }
+            Spacer(Modifier.height(8.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                TuileAction("Recherche", { onOuvrirEcran("RECHERCHE") }, Modifier.weight(1f))
+                TuileAction("Personnes", { onOuvrirEcran("PERSONNES") }, Modifier.weight(1f))
+                TuileAction("Séries", { onOuvrirEcran("SERIES") }, Modifier.weight(1f))
+            }
 
-            LazyColumn {
+            // Liste des catégories, avec pastille = nombre d'objets de tout l'arbre
+            TitreSection("Catégories", categories.size)
+
+            LazyColumn(modifier = Modifier.weight(1f)) {
                 items(categories) { categorie ->
-                    Text(
-                        text = categorie.nom,
-                        style = MaterialTheme.typography.bodyLarge,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .combinedClickable(
-                                onClick = { onOuvrirCategorie(categorie) },
-                                onLongClick = { categorieASupprimer = categorie }
-                            )
-                            .padding(vertical = 12.dp)
+                    LigneSousCategorie(
+                        sous = categorie,
+                        onClick = { onOuvrirCategorie(categorie) },
+                        onLongClick = { categorieASupprimer = categorie }
                     )
                 }
             }

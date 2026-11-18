@@ -37,4 +37,16 @@ interface CategorieDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun ajouterTout(liste: List<Categorie>)
 
+    @Query("""
+        WITH RECURSIVE descendants(id) AS (
+            SELECT id FROM categories WHERE id = :id
+            UNION ALL
+            SELECT c.id FROM categories c
+            INNER JOIN descendants d ON c.parentId = d.id
+        )
+        SELECT COUNT(*) FROM objets
+        WHERE categorieId IN (SELECT id FROM descendants)
+    """)
+    fun nombreObjetsRecursif(id: Long): Flow<Int>
+
 }
