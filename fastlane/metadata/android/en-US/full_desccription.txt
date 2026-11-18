@@ -1,0 +1,11 @@
+Ma Biblio lets you catalogue your books, comics, DVDs, games, tools and other objects. Organise them in categories and subcategories, and track loans and borrowings with the people involved.
+
+Features:
+- Collection organised by categories and subcategories
+- Loans and borrowings, with the people concerned
+- Wishlist
+- Search in your collection
+- Look up books by ISBN (optional, uses Open Library and BnF)
+- Export and import of a backup as a ZIP file
+
+All data is stored on your device. There are no accounts, no ads and no tracking.
