@@ -2,17 +2,25 @@ package fr.exemple.biblio
 
 import android.content.Context
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -23,6 +31,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EcranBibliotheque(onRetour: () -> Unit, onOuvrirObjet: (Objet) -> Unit) {
     BackHandler(onBack = onRetour)
@@ -36,31 +45,56 @@ fun EcranBibliotheque(onRetour: () -> Unit, onOuvrirObjet: (Objet) -> Unit) {
     // Choix mémorisé dans les préférences : il survit au redémarrage de l'appli
     var enGrille by remember { mutableStateOf(prefs.getBoolean("grille", false)) }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-    ) {
-        Row {
-            TextButton(onClick = onRetour) {
-                Text("← Retour")
-            }
-            TextButton(onClick = {
-                enGrille = !enGrille
-                prefs.edit().putBoolean("grille", enGrille).apply()
-            }) {
-                Text(if (enGrille) "Liste" else "Grille")
-            }
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Dans la bibliothèque") },
+                navigationIcon = {
+                    IconButton(onClick = onRetour) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Retour"
+                        )
+                    }
+                },
+                actions = {
+                    TextButton(onClick = {
+                        enGrille = !enGrille
+                        prefs.edit().putBoolean("grille", enGrille).apply()
+                    }) {
+                        Text(if (enGrille) "Liste" else "Grille")
+                    }
+                }
+            )
         }
-        Text("Dans la bibliothèque", style = MaterialTheme.typography.headlineMedium)
-        Spacer(Modifier.height(12.dp))
+    ) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+                .padding(horizontal = 16.dp)
+        ) {
+            Text(
+                text = "${possedes.size} objet(s)",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(Modifier.height(12.dp))
 
-        if (enGrille) {
-            GrilleObjets(objets = possedes, onOuvrir = onOuvrirObjet)
-        } else {
-            LazyColumn {
-                items(possedes) { o ->
-                    LigneObjet(objet = o, onClick = { onOuvrirObjet(o) })
+            when {
+                possedes.isEmpty() -> Text(
+                    "Aucun objet possédé pour l'instant.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                enGrille -> GrilleObjets(objets = possedes, onOuvrir = onOuvrirObjet)
+                else -> LazyColumn(
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    contentPadding = PaddingValues(bottom = 16.dp)
+                ) {
+                    items(possedes) { o ->
+                        LigneObjet(objet = o, onClick = { onOuvrirObjet(o) })
+                    }
                 }
             }
         }

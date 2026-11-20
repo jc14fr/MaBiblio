@@ -5,9 +5,8 @@ import android.net.Uri
 import androidx.room.withTransaction
 import org.json.JSONArray
 import org.json.JSONObject
-import java.io.ByteArrayInputStream
 import java.io.File
-import java.util.zip.ZipInputStream
+import java.util.zip.ZipFile
 
 private fun JSONObject.texteOuNull(cle: String): String? =
     if (isNull(cle)) null else getString(cle)
@@ -41,40 +40,46 @@ private fun ordonnerCategories(categories: List<Categorie>): List<Categorie> {
 }
 
 // Un ZIP commence par les deux lettres « PK »
-private fun estUneArchiveZip(octets: ByteArray): Boolean =
-    octets.size >= 2 && octets[0] == 'P'.code.toByte() && octets[1] == 'K'.code.toByte()
+private fun estUneArchiveZip(fichier: File): Boolean =
+    fichier.inputStream().use { flux ->
+        val debut = ByteArray(2)
+        flux.read(debut) == 2 && debut[0] == 'P'.code.toByte() && debut[1] == 'K'.code.toByte()
+    }
 
-// Importe un fichier .zip (JSON + pochettes) ou un ancien .json seul
-suspend fun importerSauvegarde(contexte: Context, base: BiblioDatabase, source: Uri): Boolean {
-    return try {
-        val octets = contexte.contentResolver.openInputStream(source)
-            ?.use { it.readBytes() }
-            ?: return false
+// Lit biblio.json dans le ZIP et copie les pochettes dans le dossier de l'appli
+private fun lireZip(fichier: File, dossierPochettes: File): String? =
+    ZipFile(fichier).use { zip ->
+        val entreeJson = zip.getEntry("biblio.json") ?: return null
+        val texte = zip.getInputStream(entreeJson).use { it.readBytes().toString(Charsets.UTF_8) }
 
-        val dossierPochettes = dossierPochettes(contexte)
-
-        val texte: String = if (estUneArchiveZip(octets)) {
-            var texteJson: String? = null
-            ZipInputStream(ByteArrayInputStream(octets)).use { zip ->
-                var entree = zip.nextEntry
-                while (entree != null) {
-                    if (!entree.isDirectory) {
-                        if (entree.name == "biblio.json") {
-                            texteJson = zip.readBytes().toString(Charsets.UTF_8)
-                        } else if (entree.name.startsWith("pochettes/")) {
-                            File(dossierPochettes, File(entree.name).name)
-                                .writeBytes(zip.readBytes())
-                        }
-                    }
-                    zip.closeEntry()
-                    entree = zip.nextEntry
+        zip.entries().asSequence()
+            .filter { !it.isDirectory && it.name.startsWith("pochettes/") }
+            .forEach { entree ->
+                File(dossierPochettes, File(entree.name).name).outputStream().use { sortie ->
+                    zip.getInputStream(entree).use { it.copyTo(sortie) }
                 }
             }
-            texteJson ?: return false
+        texte
+    }
+
+// Importe un .zip (JSON + pochettes) ou un ancien .json seul
+suspend fun importerSauvegarde(contexte: Context, base: BiblioDatabase, source: Uri): Boolean {
+    val tampon = File(contexte.cacheDir, "import.tmp")
+    return try {
+        // 1. Copie locale du fichier choisi
+        contexte.contentResolver.openInputStream(source)?.use { entree ->
+            tampon.outputStream().use { entree.copyTo(it) }
+        } ?: return false
+
+        // 2. Lecture
+        val dossierPochettes = dossierPochettes(contexte)
+        val texte: String = if (estUneArchiveZip(tampon)) {
+            lireZip(tampon, dossierPochettes) ?: return false
         } else {
-            String(octets, Charsets.UTF_8)
+            tampon.readText(Charsets.UTF_8)
         }
 
+        // 3. Analyse du JSON
         val racine = JSONObject(texte)
 
         val categories = racine.getJSONArray("categories").versListe { o ->
@@ -95,7 +100,6 @@ suspend fun importerSauvegarde(contexte: Context, base: BiblioDatabase, source: 
                 serie = o.texteOuNull("serie"),
                 numeroTome = o.intOuNull("numeroTome"),
                 statut = Statut.valueOf(o.optString("statut", "POSSEDE")),
-                // Le JSON contient seulement le nom du fichier : on recrée le chemin local
                 couvertureUrl = o.texteOuNull("couvertureUrl")
                     ?.let { File(dossierPochettes, it).absolutePath }
             )
@@ -116,6 +120,7 @@ suspend fun importerSauvegarde(contexte: Context, base: BiblioDatabase, source: 
             )
         }
 
+        // 4. Remplacement dans une transaction : tout ou rien
         base.withTransaction {
             base.pretDao().effacerTout()
             base.personneDao().effacerTout()
@@ -130,5 +135,7 @@ suspend fun importerSauvegarde(contexte: Context, base: BiblioDatabase, source: 
         true
     } catch (e: Exception) {
         false
+    } finally {
+        tampon.delete()
     }
 }

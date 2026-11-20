@@ -48,6 +48,7 @@ import androidx.compose.ui.unit.dp
 import com.journeyapps.barcodescanner.ScanContract
 import com.journeyapps.barcodescanner.ScanOptions
 import kotlinx.coroutines.launch
+import java.io.File
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -153,10 +154,12 @@ fun EcranDetailCategorie(
         }
     }
 
+    // Photo : réduite juste après la prise de vue, puis enregistrée avec le livre
     val photoLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.TakePicture()
     ) { ok ->
         if (ok) {
+            cheminPhotoEnCours?.let { compresserPhoto(File(it)) }
             photoPrise = cheminPhotoEnCours
             messageScan = ""
         } else {

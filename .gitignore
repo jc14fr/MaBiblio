@@ -1,12 +1,17 @@
-build/
+# Fichiers générés par Gradle et Android Studio
 .gradle/
-.kotlin/
-local.properties
-.idea/
+build/
+app/build/
 *.iml
-captures/
-.cxx/
+.idea/
+local.properties
+
+# Données de test et APK
 *.apk
-*.aab
+*.zip
+*.json
+!settings.gradle.kts
+
+# Clés de signature (ne jamais les publier)
 *.jks
 *.keystore

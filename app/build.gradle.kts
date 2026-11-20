@@ -6,7 +6,6 @@ plugins {
     id("com.google.devtools.ksp")
 }
 
-// Lecture seule de version.properties : le build ne modifie jamais ce fichier
 
 
 android {
@@ -14,14 +13,17 @@ android {
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "fr.jc14fr.MaBiblio"
+        applicationId = "fr.exemple.biblio"
         minSdk = 26
         targetSdk = 35
-        versionCode = 1020014
-        versionName = "1.2.14"
+        versionCode = 1030003
+        versionName = "1.3.0"
     }
 
-    buildFeatures { compose = true }
+    buildFeatures {
+    compose = true
+    buildConfig = true
+}
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -39,9 +41,19 @@ dependencies {
     implementation("androidx.activity:activity-compose:1.9.2")
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.material3:material3")
+    implementation("androidx.compose.material:material-icons-core")
     implementation("com.journeyapps:zxing-android-embedded:4.3.0")
     implementation("androidx.room:room-runtime:2.6.1")
     implementation("androidx.room:room-ktx:2.6.1")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
     ksp("androidx.room:room-compiler:2.6.1")
+
+// Copie l'APK sous un nom lisible après assembleDebug
+tasks.matching { it.name == "assembleDebug" }.configureEach {
+    doLast {
+        val dossier = layout.buildDirectory.dir("outputs/apk/debug").get().asFile
+        File(dossier, "app-debug.apk").takeIf { it.exists() }
+            ?.copyTo(File(dossier, "MaBiblio-1.3.0.apk"), overwrite = true)
+    }
+}
 }
